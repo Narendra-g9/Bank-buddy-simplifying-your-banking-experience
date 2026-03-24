@@ -7,7 +7,7 @@ import api from "../../api/Api";
 const HomePage = () => {
   const [activeItem, setActiveItem] = useState("");
 
-  const [EmailData, setEmailData] = useState<string>("");
+  const [EmailData, setEmailData] = useState("");
   const navigate = useNavigate(); // Initialize navigate
 
   const handleLogout = () => {

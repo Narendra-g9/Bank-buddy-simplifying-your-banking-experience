@@ -5,7 +5,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import HeroSection from './HeroSection';
 import FooterPage from './FooterPage';
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
     const settings = {
         dots: true, // Show dots for navigation
         infinite: true, // Infinite sliding

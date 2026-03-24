@@ -1,6 +1,6 @@
 import React from "react";
 
-const AboutUs: React.FC = () => {
+const AboutUs = () => {
   return (
     <div>
       <div className="sm:flex items-center max-w-screen-xl">

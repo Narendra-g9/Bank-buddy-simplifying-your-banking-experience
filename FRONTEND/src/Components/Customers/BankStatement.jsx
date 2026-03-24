@@ -3,26 +3,11 @@ import api from "../../api/Api";
 import { useForm } from "react-hook-form";
 import { jsPDF } from "jspdf";
 
-interface BookStatements {
-  _id: string;
-  accountNumber: string; // The account number of the sender
-  accUser: string; // Unique identifier for the sender (likely MongoDB ObjectId)
-  destinationAccount: string; // The account number of the recipient
-  destUser: string; // Unique identifier for the recipient (likely MongoDB ObjectId)
-  amount: number; // Amount of the transfer transaction
-  date: string; // Date of the transaction in ISO format
-  __v: number; // Version key for document versioning in MongoDB
-  type: string; // Type of transaction (in this case, "transfer")
-  transactionDate: string; // Transaction date in a more readable format (DD/MM/YYYY)
-  transactionTime: string;
-  username: string;
-}
-
 const BankStatement = () => {
   // Retrieve user data from local storage
 
   const addForm = useForm();
-  const [TransactionsData, setTransactionsData] = useState<BookStatements[]>();
+  const [TransactionsData, setTransactionsData] = useState();
 
   const searchByDate = async () => {
     try {
@@ -161,7 +146,7 @@ const BankStatement = () => {
           </thead>
           <tbody>
             {TransactionsData &&
-              TransactionsData.map((item: BookStatements, index: number) => (
+              TransactionsData.map((item, index) => (
                 <tr key={index}>
                   <td className="py-2 px-4 border border-gray-300">
                     {item.transactionDate} {item.transactionTime}

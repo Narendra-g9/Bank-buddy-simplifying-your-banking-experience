@@ -13,9 +13,9 @@ import { getDateIST, getTimeIST } from "../utils/getIstDateTime";
 
 // Admin registering
 export const registerAdmin = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const data = matchedData(req);
   const { username, password, email } = data;
   if (!username || !password || !email) {
@@ -39,13 +39,13 @@ export const registerAdmin = async (
     return res.status(201).send({
       msg: `Registered Successful  ✅.Pls login ${savedUser.username}`,
     });
-  } catch (err: any) {
-    return res.status(400).send({ error: err });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Login the Admin
-export const adminLogin = async (req: Request, res: Response): Promise<any> => {
+export const adminLogin = async (req, res) => {
   try {
     const body = req.body;
     const pass = body.password;
@@ -70,31 +70,31 @@ export const adminLogin = async (req: Request, res: Response): Promise<any> => {
       accessToken,
       role: findUser.role,
     });
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Admin can view All users
 export const viewAllUsers = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   try {
     const result = await User.find({}).select("-password");
     res.send(result);
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get All the Debit Card Details
 export const getAllPendingDebitCards = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   try {
-    const debitCardData: any = await DebitCard.find({
+    const debitCardData = await DebitCard.find({
       status: "pending",
     }).select(["-updatedAt"]);
     if (debitCardData.length === 0) {
@@ -103,31 +103,31 @@ export const getAllPendingDebitCards = async (
 
     // Fetch user details for each pending debit card
     const debitCardDetailsWithUsers = await Promise.all(
-      debitCardData.map(async (debitCard: any) => {
+      debitCardData.map(async (debitCard) => {
         console.log(debitCard);
         const user = await User.findById(debitCard.userid).select([
           "firstname",
           "lastname",
           "email",
         ]);
-        const accountDetails: any = await Account.findOne({
+        const accountDetails = await Account.findOne({
           accUser: debitCard.userid,
         });
         return {
           ...debitCard.toObject(),
           email: user?.email,
-          accNumber: accountDetails.accNumber,
+          accNumber: accountDetails?.accNumber,
           date: getDateIST(debitCard.createdAt),
           time: getTimeIST(debitCard.createdAt),
-          accBalance: accountDetails.accBalance,
+          accBalance: accountDetails?.accBalance,
         };
       })
     );
 
     res.send(debitCardDetailsWithUsers);
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
@@ -176,21 +176,21 @@ const generateExpiryDate = async () => {
 
 // Admin can approve or reject the debit card application
 export const reviewDebitCardApplication = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const { debitid, status } = req.body;
   try {
-    const debitCardApplication: any = await DebitCard.findOne({ _id: debitid });
+    const debitCardApplication= await DebitCard.findOne({ _id: debitid });
     if (!debitCardApplication) {
       return res.status(404).send({ msg: "Application not found" });
     }
-    const debitCardAccount: any = await User.findOne({
+    const debitCardAccount= await User.findOne({
       _id: debitCardApplication.userid,
     });
     if (debitCardApplication) {
-      let name = debitCardApplication.cardHolder;
-      let email = debitCardAccount?.email;
+      let name = debitCardApplication.cardHolder || "";
+      let email = debitCardAccount?.email || "";
       sendDebitCardStatusEmail(name, email, status);
     }
     if (status === "accepted") {
@@ -209,16 +209,16 @@ export const reviewDebitCardApplication = async (
       debitCardApplication.status = status;
       const rejectedStatus = await debitCardApplication.save();
       if (rejectedStatus) {
-        let name = debitCardApplication.cardHolder;
-        let email = debitCardAccount?.email;
+        let name = debitCardApplication.cardHolder || "";
+        let email = debitCardAccount?.email || "";
         sendDebitCardRejectEmail(name, email, status);
       }
       return res.send({ msg: "Debit Card Rejected", debitCardApplication });
     } else {
       return res.status(400).send({ msg: "Invalid action" });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };

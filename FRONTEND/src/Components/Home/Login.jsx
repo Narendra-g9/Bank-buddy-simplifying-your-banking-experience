@@ -9,7 +9,7 @@ const Login = () => {
   const addForm = useForm();
 
   const navigate = useNavigate();
-  const handleSubmit = addForm.handleSubmit(async (data: any) => {
+  const handleSubmit = addForm.handleSubmit(async (data) => {
     try {
       const response = await api.post("user/login", {
         email: data.email,
@@ -27,7 +27,7 @@ const Login = () => {
   });
 
   const [ForgetModalPassword, setForgetModalPassword] =
-    useState<boolean>(false);
+    useState(false);
 
   const ModalFun = () => {
     if (ForgetModalPassword) {

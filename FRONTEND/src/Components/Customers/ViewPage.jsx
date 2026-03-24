@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 import ViewProfile from "./ViewProfile";
 import BankStatement from "./BankStatement";
 
-const ViewPage: React.FC = () => {
-  const [activeForm, setActiveForm] = useState<"profile" | "statement">(
-    "profile"
-  );
+const ViewPage = () => {
+  const [activeForm, setActiveForm] = useState("profile");
 
   useEffect(() => {}, [activeForm]);
   return (

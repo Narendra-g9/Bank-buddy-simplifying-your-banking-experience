@@ -12,6 +12,7 @@ import {
 import { verifyAdmin } from "../middlewares/verifyAdmin";
 import { sendOTP } from "../controller/forgotPassword";
 import { OTPverification } from "../controller/resetPassword";
+import { sendAdminOTP, verifyAdminOTP } from "../controller/adminForgotPassword";
 const router = express.Router();
 
 // Admin Register
@@ -70,6 +71,11 @@ router.patch("/loans/status/:loanId", verifyAdmin, updateLoanStatus);
 router.post("/sendotp", sendOTP);
 // OTP verififcation
 router.post("/otpverify", OTPverification);
+
+// Admin Forgot Password
+router.post("/admin/forgotpassword", sendAdminOTP);
+// Admin OTP Verification and Password Reset
+router.post("/admin/resetpassword", verifyAdminOTP);
 
 // Apply For Debit card
 router.post("/apply/debitcard", userController.applyDebit);

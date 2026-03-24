@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export default {
-  PORT: process.env.PORT || 4000,
+  PORT: process.env.PORT || 4001,
   DB_URL:
     process.env.DB_URL ||
     "mongodb://localhost:27017/Bank_Buddy?authSource=admin",
@@ -12,6 +12,6 @@ export default {
     process.env.USER_ACCESS_TOKEN_SECRET || "DOC$@!:-0><?:TORT67K@!E><N",
   SMTP_URL:
     process.env.SMTP_URL ||
-    "smtps://yenumulasrirambrahmareddy@gmail.com:upjncsssckexvvjj@smtp.gmail.com/?pool=true",
+    "smtps://narendrayadala5@gmail.com:Narendra@123@smtp.gmail.com/?pool=true",
   ACCESS_TOKEN_EXPIRY: "2d",
 };

@@ -1,22 +1,9 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/Api";
 
-// Define the shape of the user entity
-interface User {
-  firstname: string;
-  lastname: string;
-  otherName?: string | null;
-  gender: string;
-  address: string;
-  stateofOrigin: string;
-  email: string;
-  phoneNumber: string;
-  alternativePhoneNumber?: string | null;
-}
-
-const ViewUsers: React.FC = () => {
-  const [userData, setUserData] = useState<User[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+const ViewUsers = () => {
+  const [userData, setUserData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const usersFun = async () => {
     try {
       const res = await api.get("getallusers");

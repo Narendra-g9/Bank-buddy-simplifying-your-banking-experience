@@ -27,11 +27,11 @@ const App = () => {
       <Router>
         <Routes>
           <Route path="/" element={<Dashboard />}>
-            <Route path="/login" element={<Login />} />
+            <Route path="login" element={<Login />} />
 
-            <Route path="/register" element={<UserForm />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/services" element={<ServicesPage />} />
+            <Route path="register" element={<UserForm />} />
+            <Route path="about" element={<AboutUs />} />
+            <Route path="services" element={<ServicesPage />} />
           </Route>
 
           <Route path="/user" element={<HomePage />}>
@@ -39,14 +39,14 @@ const App = () => {
             <Route path="view" element={<ViewPage />} />
             <Route path="Customer-Debit" element={<CusDebitCard />} />
             <Route path="customer-service" element={<ContactUs />} />
-            <Route path="/user/load" element={<Loan />} />
+            <Route path="load" element={<Loan />} />
           </Route>
           <Route path="/admin-login" element={<AdminLogin />} />
 
           <Route path="admin" element={<AdminHome />}>
             <Route path="add-user" element={<Addusers />} />
             <Route path="view-users" element={<ViewUsers />} />
-            <Route path="/admin/loan" element={<AdminLoan />} />
+            <Route path="loan" element={<AdminLoan />} />
             <Route path="debit-card" element={<DebitCard />} />
           </Route>
         </Routes>

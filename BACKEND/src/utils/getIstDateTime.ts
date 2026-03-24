@@ -1,5 +1,5 @@
 // Helper function to get only the date in IST
-export const getDateIST = (date: Date) => {
+export const getDateIST = (date: any) => {
   const options: Intl.DateTimeFormatOptions = {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -10,7 +10,7 @@ export const getDateIST = (date: Date) => {
 };
 
 // Helper function to get only the time in IST
-export const getTimeIST = (date: Date) => {
+export const getTimeIST = (date: any) => {
   const options: Intl.DateTimeFormatOptions = {
     timeZone: "Asia/Kolkata",
     hour: "2-digit",

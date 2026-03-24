@@ -3,9 +3,9 @@ import { OTP, User } from "../schema/usersSchema";
 import { hashPassword } from "../utils/helpers";
 
 export const OTPverification = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const { email, otp, password } = req.body;
   try {
     const findAccount = await OTP.find({ email })
@@ -26,7 +26,7 @@ export const OTPverification = async (
     account.password = hashedPassword;
     await account.save();
     return res.send({ msg: "Password Changed Successfully" });
-  } catch (err: any) {
+  } catch (err) {
     return res.status(400).send({ error: err });
   }
 };

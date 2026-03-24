@@ -5,7 +5,7 @@ import { BankAccount } from "./Transactions";
 // Dummy data
 
 const ViewProfile = () => {
-  const [personalDetails, setPersonalDetails] = useState<BankAccount>();
+  const [personalDetails, setPersonalDetails] = useState();
 
   const fetchUser = async () => {
     try {

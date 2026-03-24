@@ -1,24 +1,10 @@
 import React from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../api/Api";
-
-// Define the shape of the form data
-interface FormData {
-  firstname: string;
-  lastname: string;
-  otherName?: string | null;
-  gender: string;
-  address: string;
-  stateofOrigin: string;
-  password: string;
-  email: string;
-  phoneNumber: string;
-  alternativePhoneNumber?: string | null;
-}
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -47,18 +33,18 @@ const schema = yup.object().shape({
   alternativePhoneNumber: yup.string().nullable(),
 });
 
-const UserForm: React.FC = () => {
+const UserForm = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm({
     resolver: yupResolver(schema),
   });
 
   const navigate = useNavigate();
 
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
+  const onSubmit = async (data) => {
     try {
       await api.post("user/register", data);
 

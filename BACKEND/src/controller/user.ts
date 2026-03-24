@@ -15,9 +15,13 @@ import {
   sendDebitEmail,
   sendRegistrationEmail,
   sendTransferEmail,
+  sendAdminCreditNotification,
+  sendAdminDebitNotification,
+  sendAdminTransferNotification,
 } from "../utils/helpers";
 import { userTokens } from "../utils/tokenGeneration";
 import { verifyUserToken } from "../middlewares/verifyTokens";
+import { getDateIST, getTimeIST } from "../utils/getIstDateTime";
 import QRCode from "qrcode";
 
 // Function to generate a unique bank account number
@@ -44,9 +48,9 @@ const generateAccountNumber = async () => {
 
 // User registering
 export const registerUser = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const {
     firstname,
     lastname,
@@ -105,12 +109,12 @@ export const registerUser = async (
         accHolder: newAccount.accHolder,
       },
     });
-  } catch (err: any) {
+  } catch (err) {
     return res.status(400).send({ error: err });
   }
 };
 // Login the User
-export const userLogin = async (req: Request, res: Response): Promise<any> => {
+export const userLogin = async (req, res) => {
   try {
     const body = req.body;
     const pass = body.password;
@@ -133,17 +137,17 @@ export const userLogin = async (req: Request, res: Response): Promise<any> => {
       accessToken,
       role: findUser.role,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Credit the Amount
 export const creditAmount = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const amount = Number(req.body.amount);
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -158,7 +162,10 @@ export const creditAmount = async (
     }
 
     const userid = decoded.id;
-    const getAccount: any = await Account.findOne({ accUser: userid });
+    const getAccount = await Account.findOne({ accUser: userid });
+    if (!getAccount) {
+      return res.status(404).send({ msg: "Account not found" });
+    }
     getAccount.accBalance += amount;
     const savedAccount = await getAccount.save();
 
@@ -171,11 +178,11 @@ export const creditAmount = async (
     const time = getTimeIST(creditedTransaction?.date);
     const userDetails = await User.findOne({ _id: userid });
     if (savedAccount) {
-      let userFullName = userDetails?.firstname + " " + userDetails?.lastname;
-      let useremail: any = userDetails?.email;
+      let userFullName = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
+      let useremail = userDetails?.email || "";
       let dateTime = date + " " + time;
       let balance = savedAccount?.accBalance;
-      let accountnumberis = savedAccount?.accUser;
+      let accountnumberis = savedAccount?.accUser?.toString() || "";
       let transactionID = creditedTransaction?._id;
       sendCreditEmail(
         userFullName,
@@ -186,18 +193,25 @@ export const creditAmount = async (
         accountnumberis,
         transactionID
       );
+      // Send admin notification
+      sendAdminCreditNotification(
+        userFullName,
+        amount,
+        getAccount.accNumber || "",
+        dateTime
+      );
     }
     return res.send({ msg: "Credited Amount Successfully", savedAccount });
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
-// Credit the Amount
+// Debit the Amount
 export const debitAmount = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const amount = Number(req.body.amount);
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -212,7 +226,10 @@ export const debitAmount = async (
     }
 
     const userid = decoded.id;
-    const getAccount: any = await Account.findOne({ accUser: userid });
+    const getAccount = await Account.findOne({ accUser: userid });
+    if (!getAccount) {
+      return res.status(404).send({ msg: "Account not found" });
+    }
     if (amount > getAccount.accBalance) {
       return res.send({ msg: `Your account balance is insufficient` });
     }
@@ -227,11 +244,11 @@ export const debitAmount = async (
     const time = getTimeIST(debitedTransaction?.date);
     const userDetails = await User.findOne({ _id: userid });
     if (savedAccount) {
-      let userFullName = userDetails?.firstname + " " + userDetails?.lastname;
-      let useremail: any = userDetails?.email;
+      let userFullName = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
+      let useremail = userDetails?.email || "";
       let dateTime = date + " " + time;
       let balance = savedAccount?.accBalance;
-      let accountnumberis = savedAccount?.accUser;
+      let accountnumberis = savedAccount?.accUser?.toString() || "";
       let transactionID = debitedTransaction?._id;
       sendDebitEmail(
         userFullName,
@@ -242,19 +259,26 @@ export const debitAmount = async (
         accountnumberis,
         transactionID
       );
+      // Send admin notification
+      sendAdminDebitNotification(
+        userFullName,
+        amount,
+        getAccount.accNumber || "",
+        dateTime
+      );
     }
     return res.send({ msg: "Debited Amount Successfully", savedAccount });
-  } catch (err: any) {
+  } catch (err) {
     console.log(err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Transfer the Amount
 export const transferAmount = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const { destinationAccount } = req.body;
   const amount = Number(req.body.amount);
   const authHeader = req.headers.authorization;
@@ -270,9 +294,12 @@ export const transferAmount = async (
     }
 
     const userid = decoded.id;
-    const getsourceAccount: any = await Account.findOne({
+    const getsourceAccount = await Account.findOne({
       accUser: userid,
     });
+    if (!getsourceAccount) {
+      return res.status(404).send({ msg: "Source account not found" });
+    }
     if (amount > getsourceAccount.accBalance) {
       return res.send({
         msg: `Your account balance is insufficient to transfer`,
@@ -280,7 +307,7 @@ export const transferAmount = async (
     }
     getsourceAccount.accBalance -= amount;
     const savedAccount = await getsourceAccount.save();
-    const getdestinationAccount: any = await Account.findOne({
+    const getdestinationAccount = await Account.findOne({
       accNumber: destinationAccount,
     });
     if (!getdestinationAccount) {
@@ -299,11 +326,11 @@ export const transferAmount = async (
     const time = getTimeIST(transferAmountTransaction?.date);
     const userDetails = await User.findOne({ _id: userid });
     if (savedAccount) {
-      let userFullName = userDetails?.firstname + " " + userDetails?.lastname;
-      let useremail: any = userDetails?.email;
+      let userFullName = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
+      let useremail = userDetails?.email || "";
       let dateTime = date + " " + time;
       let balance = savedAccount?.accBalance;
-      let accountnumberis = savedAccount?.accUser;
+      let accountnumberis = savedAccount?.accUser?.toString() || "";
       let transactionID = transferAmountTransaction?._id;
       sendTransferEmail(
         userFullName,
@@ -315,43 +342,29 @@ export const transferAmount = async (
         transactionID,
         destinationAccount
       );
+      // Send admin notification
+      sendAdminTransferNotification(
+        userFullName,
+        amount,
+        getsourceAccount.accNumber || "",
+        destinationAccount,
+        dateTime
+      );
     }
 
     res.send({
       msg: `Amount transfered from ${getsourceAccount.accNumber} to ${destinationAccount} Successful`,
     });
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
-};
-
-// Helper function to get only the date in IST
-const getDateIST = (date: Date) => {
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  };
-  return new Date(date).toLocaleDateString("en-IN", options);
-};
-
-// Helper function to get only the time in IST
-const getTimeIST = (date: Date) => {
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: "Asia/Kolkata",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  };
-  return new Date(date).toLocaleTimeString("en-IN", options);
 };
 
 // Get all credit transactions based on accountId
 export const getAllCreditTransactions = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -373,7 +386,7 @@ export const getAllCreditTransactions = async (
     }
 
     // Use Promise.all to wait for all promises to resolve
-    const finalResult = result.map((eachItem: any) => {
+    const finalResult = result.map((eachItem) => {
       return {
         ...eachItem.toObject(),
         transactionDate: eachItem?.date ? getDateIST(eachItem.date) : null,
@@ -382,15 +395,15 @@ export const getAllCreditTransactions = async (
     });
 
     res.send(finalResult);
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 // Get all Debit transactions based on accountId
 export const getAllDebitTransactions = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -412,7 +425,7 @@ export const getAllDebitTransactions = async (
     }
 
     // Use Promise.all to wait for all promises to resolve
-    const finalResult = result.map((eachItem: any) => {
+    const finalResult = result.map((eachItem) => {
       return {
         ...eachItem.toObject(),
         transactionDate: eachItem?.date ? getDateIST(eachItem.date) : null,
@@ -421,15 +434,15 @@ export const getAllDebitTransactions = async (
     });
 
     res.send(finalResult);
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 // Get all Transfer transactions based on accountId
 export const getAllTransferTransactions = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -451,7 +464,7 @@ export const getAllTransferTransactions = async (
     }
 
     // Use Promise.all to wait for all promises to resolve
-    const finalResult = result.map((eachItem: any) => {
+    const finalResult = result.map((eachItem) => {
       return {
         ...eachItem.toObject(),
         transactionDate: eachItem?.date ? getDateIST(eachItem.date) : null,
@@ -460,16 +473,16 @@ export const getAllTransferTransactions = async (
     });
 
     res.send(finalResult);
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
+  } catch (err) {
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get the profile History and Balance
 export const getProfileWithAccount = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -506,128 +519,32 @@ export const getProfileWithAccount = async (
     return res.send({
       userDetails: data,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get account details based on Account Number
-export const getAccount = async (req: Request, res: Response): Promise<any> => {
+export const getAccount = async (req, res) => {
   const accountid = req.params.accountnumber;
   try {
-    const result: any = await Account.findOne({ accNumber: accountid }).select(
+    const result = await Account.findOne({ accNumber: accountid }).select(
       "accHolder"
     );
+    if (!result) {
+      return res.status(404).send({ msg: "Account not found" });
+    }
     const { accHolder } = result;
     return res.send(accHolder);
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
-  }
-};
-
-// Define a type for the filter
-interface TransactionFilter {
-  accUser: String;
-  date?: {
-    $gte: Date;
-    $lte: Date;
-  };
-}
-
-// Get transactions by date range
-export const getTransactionsByDateRange = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).send({ msg: "Authorization header is missing" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  try {
-    const decoded: any = verifyUserToken(token);
-    if (!decoded) {
-      return res.status(401).send({ msg: "Access Token is Invalid" });
-    }
-
-    const userid = decoded.id;
-    const { startDate, endDate } = req.query;
-
-    // Base filter
-    let filter: TransactionFilter = { accUser: userid };
-
-    // If dates are provided, add date filter
-    if (startDate && endDate) {
-      const start = new Date(startDate as string);
-      const end = new Date(endDate as string);
-      filter = {
-        ...filter,
-        date: { $gte: start, $lte: end },
-      };
-    }
-
-    // Fetch transactions
-    const creditTransactions = await Credit.find(filter).sort({ date: -1 });
-    const debitTransactions = await Debit.find(filter).sort({ date: -1 });
-    const transferTransactions = await Transfer.find(filter).sort({ date: -1 });
-
-    // Combine results and add transaction type
-    const combinedTransactions = [
-      ...creditTransactions.map((tx) => ({
-        ...tx.toObject(),
-        type: "credit",
-        destinationAccount: "",
-        username: "",
-        transactionDate: getDateIST(tx.date),
-        transactionTime: getTimeIST(tx.date),
-      })),
-      ...debitTransactions.map((tx) => ({
-        ...tx.toObject(),
-        type: "debit",
-        destinationAccount: "",
-        username: "",
-        transactionDate: getDateIST(tx.date),
-        transactionTime: getTimeIST(tx.date),
-      })),
-      ...(await Promise.all(
-        transferTransactions.map(async (tx) => {
-          const destinationAccountUser = await User.findOne({
-            _id: tx.destUser,
-          });
-          const destinationUserName = destinationAccountUser
-            ? `${destinationAccountUser.firstname} ${destinationAccountUser.lastname}`
-            : "Unknown";
-
-          return {
-            ...tx.toObject(),
-            type: "transfer",
-            username: destinationUserName,
-            transactionDate: getDateIST(tx.date),
-            transactionTime: getTimeIST(tx.date),
-          };
-        })
-      )),
-    ];
-
-    const accountDetails = await Account.findOne({ accUser: userid });
-    let accountBalance = accountDetails?.accBalance;
-    if (combinedTransactions.length === 0) {
-      return res.send({ combinedTransactions, accountBalance: accountBalance });
-    }
-
-    res.send({ combinedTransactions, accountBalance: accountBalance });
-  } catch (err: any) {
-    console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // User can Apply for Debit card
-export const applyDebit = async (req: Request, res: Response): Promise<any> => {
+export const applyDebit = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -643,10 +560,10 @@ export const applyDebit = async (req: Request, res: Response): Promise<any> => {
 
     const userid = decoded.id;
     const accountUser = await User.findOne({ _id: userid });
-    let fullname = accountUser?.firstname + " " + accountUser?.lastname;
-    let userEmail = accountUser?.email!;
+    let fullname = (accountUser?.firstname || "") + " " + (accountUser?.lastname || "");
+    let userEmail = accountUser?.email || "";
 
-    const cardDataAdded: any = await DebitCard.findOne({ userid: userid });
+    const cardDataAdded = await DebitCard.findOne({ userid: userid });
     if (cardDataAdded?.status === "pending") {
       return res.status(402).send({
         msg: "You are Already applied for Debit card .pls Wait for Approval ",
@@ -662,17 +579,17 @@ export const applyDebit = async (req: Request, res: Response): Promise<any> => {
     }
 
     res.send({ msg: "Successfully Debit Card Applied.Wait For Approval " });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // check The Debit card is Present or not
 export const checkDebitCard = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -689,17 +606,17 @@ export const checkDebitCard = async (
       return res.send({ success: true });
     }
     res.send({ success: false });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get the Debit card Details
 export const getDebitCardDetails = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -713,7 +630,7 @@ export const getDebitCardDetails = async (
     }
 
     const userid = decoded.id;
-    const debitCardData: any = await DebitCard.findOne({ userid: userid });
+    const debitCardData = await DebitCard.findOne({ userid: userid });
 
     if (!debitCardData) {
       return res.send({ msg: "First Apply for the DebitCard" });
@@ -731,14 +648,14 @@ export const getDebitCardDetails = async (
       cardNumber: debitCardDetails,
       cardHolder: debitCardData.cardHolder,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get my Email
-export const getEmail = async (req: Request, res: Response): Promise<any> => {
+export const getEmail = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -754,8 +671,94 @@ export const getEmail = async (req: Request, res: Response): Promise<any> => {
     const userid = decoded.id;
     const getEmail = await User.findOne({ _id: userid });
     return res.send({ email: getEmail?.email });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error:", err);
-    return res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: (err as Error).message });
+  }
+};
+
+// Get transactions by date range
+export const getTransactionsByDateRange = async (
+  req,
+  res
+) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ msg: "Authorization header is missing" });
+  }
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded: any = verifyUserToken(token);
+    if (!decoded) {
+      return res.status(401).send({ msg: "Access Token is Invalid" });
+    }
+
+    const userid = decoded.id;
+    const { fromDate, toDate } = req.query;
+
+    // Parse dates from query parameters
+    const startDate = new Date(fromDate as string);
+    const endDate = new Date(toDate as string);
+    
+    // Set end date to end of day
+    endDate.setHours(23, 59, 59, 999);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return res.status(400).send({ msg: "Invalid date format. Use YYYY-MM-DD" });
+    }
+
+    // Fetch all transactions within the date range
+    const creditTransactions = await Credit.find({
+      accUser: userid,
+      date: { $gte: startDate, $lte: endDate },
+    }).sort({ date: -1 });
+
+    const debitTransactions = await Debit.find({
+      accUser: userid,
+      date: { $gte: startDate, $lte: endDate },
+    }).sort({ date: -1 });
+
+    const transferTransactions = await Transfer.find({
+      accUser: userid,
+      date: { $gte: startDate, $lte: endDate },
+    }).sort({ date: -1 });
+
+    // Combine and format all transactions
+    const allTransactions = [
+      ...creditTransactions.map((item) => ({
+        ...item.toObject(),
+        type: "Credit",
+        transactionDate: item?.date ? getDateIST(item.date) : null,
+        transactionTime: item?.date ? getTimeIST(item.date) : null,
+      })),
+      ...debitTransactions.map((item) => ({
+        ...item.toObject(),
+        type: "Debit",
+        transactionDate: item?.date ? getDateIST(item.date) : null,
+        transactionTime: item?.date ? getTimeIST(item.date) : null,
+      })),
+      ...transferTransactions.map((item) => ({
+        ...item.toObject(),
+        type: "Transfer",
+        transactionDate: item?.date ? getDateIST(item.date) : null,
+        transactionTime: item?.date ? getTimeIST(item.date) : null,
+      })),
+    ];
+
+    // Sort by date descending
+    allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (allTransactions.length === 0) {
+      return res.send({
+        msg: "No transactions found for the given date range",
+        transactions: [],
+      });
+    }
+
+    res.send(allTransactions);
+  } catch (err) {
+    console.error("Error:", err);
+    return res.status(400).send({ error: (err as Error).message });
   }
 };

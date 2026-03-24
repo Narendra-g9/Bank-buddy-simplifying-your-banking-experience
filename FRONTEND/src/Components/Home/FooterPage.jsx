@@ -1,6 +1,6 @@
 import React from 'react'
 
-const FooterPage:React.FC = () => {
+const FooterPage = () => {
   return (
     <div>
       <footer className="bg-gray-800 text-white py-4">

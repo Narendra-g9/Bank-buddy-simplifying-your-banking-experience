@@ -1,25 +1,5 @@
 import { useForm } from "react-hook-form";
 
-export interface FormInputsTypes {
-  inputs: InputTypes[];
-  endPoint: string;
-  close: () => void;
-  heading: string;
-  payment?: boolean;
-  select?: boolean;
-  options?: Array<string>;
-}
-
-export interface InputTypes {
-  inputType?: string;
-  inputName: string;
-  pattern: RegExp | string;
-  patternMessage: string;
-  maxLength: number;
-  minLength: number;
-  key: string;
-}
-
 import { useState } from "react";
 import api from "../../api/Api";
 import { toast } from "react-toastify";
@@ -31,10 +11,10 @@ const Form = ({
   payment,
   select,
   options,
-}: FormInputsTypes) => {
+}) => {
   const addForm = useForm();
 
-  const [Modal, setModal] = useState<boolean>(false);
+  const [Modal, setModal] = useState(false);
 
   const add = addForm.handleSubmit(async () => {
     const data = inputs.reduce((acc, item) => {
@@ -42,7 +22,7 @@ const Form = ({
 
       acc[key] = addForm.getValues(item.inputName);
       return acc;
-    }, {} as Record<string, any>);
+    }, {});
 
     let final;
     if (select) {
@@ -64,7 +44,7 @@ const Form = ({
         close();
       }
       toast.success(res.data.msg);
-    } catch (error: any) {
+    } catch (error) {
       toast.error(error.response.data.msg);
       console.log(error, "error");
     }
@@ -93,7 +73,7 @@ const Form = ({
             </p>
             <p className=" text-center text-4xl font-bold mb-3">{heading}</p>
             {inputs &&
-              inputs.map((item: InputTypes, index: number) => (
+              inputs.map((item, index) => (
                 <div className="mb-5" key={index + 1}>
                   <div className="">
                     <label
@@ -148,7 +128,7 @@ const Form = ({
                       required: "Loan type is Required",
                     })}
                   >
-                    {options.map((item: string, index: number) => (
+                    {options.map((item, index) => (
                       <option value={item} key={index}>
                         {item}
                       </option>

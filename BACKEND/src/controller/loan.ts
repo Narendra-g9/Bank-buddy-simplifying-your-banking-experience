@@ -6,7 +6,7 @@ import { getDateIST, getTimeIST } from "../utils/getIstDateTime";
 import { sendLoanUpdateStatusEmail } from "../utils/helpers";
 
 // Create a new loan application
-export const createLoan = async (req: Request, res: Response): Promise<any> => {
+export const createLoan = async (req, res) => {
   const { amount, interestRate, term, loanType } = req.body;
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -33,16 +33,16 @@ export const createLoan = async (req: Request, res: Response): Promise<any> => {
     res
       .status(201)
       .send({ msg: "Loan application created successfully.", loan: newLoan });
-  } catch (err: any) {
-    res.status(400).send({ error: err.message });
+  } catch (err) {
+    res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get all loans for admin
 export const getAllLoans = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   try {
     const loans = await Loan.find().populate("user", "firstname lastname");
     const formattedLoans = loans.map((loan) => ({
@@ -51,16 +51,16 @@ export const getAllLoans = async (
       updatedAt: getDateIST(loan.updatedAt) + " " + getTimeIST(loan.updatedAt),
     }));
     res.send(formattedLoans);
-  } catch (err: any) {
-    res.status(400).send({ error: err.message });
+  } catch (err) {
+    res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Update loan status (accept/reject)
 export const updateLoanStatus = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+  req,
+  res
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -94,31 +94,37 @@ export const updateLoanStatus = async (
     if (!loan) {
       return res.status(404).send({ msg: "Loan not found." });
     }
-    const userDetails: any = await User.findOne({ _id: loan.user });
+    const userDetails = await User.findOne({ _id: loan.user });
+    if (!userDetails) {
+      return res.status(404).send({ msg: "User not found." });
+    }
     if (status === "accepted") {
-      const accountDetails: any = await Account.findOne({ accUser: loan.user });
+      const accountDetails = await Account.findOne({ accUser: loan.user });
+      if (!accountDetails) {
+        return res.status(404).send({ msg: "Account not found." });
+      }
       accountDetails.accBalance += Number(loan.amount);
       await accountDetails.save();
-      let name = userDetails.firstname + " " + userDetails.lastname;
+      let name = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
       if (accountDetails) {
-        sendLoanUpdateStatusEmail(userDetails?.email, status, name, loan);
+        sendLoanUpdateStatusEmail(userDetails?.email || "", status, name, loan);
       }
     }
     if (status === "rejected") {
-      let name = userDetails.firstname + " " + userDetails.lastname;
+      let name = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
       if (status) {
-        sendLoanUpdateStatusEmail(userDetails?.email, status, name, loan);
+        sendLoanUpdateStatusEmail(userDetails?.email || "", status, name, loan);
       }
     }
     res.send({ msg: "Loan status updated successfully.", loan });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error updating loan status:", err);
-    res.status(400).send({ error: err.message });
+    res.status(400).send({ error: (err as Error).message });
   }
 };
 
 // Get the Loan details by userId
-export const getMyLoans = async (req: Request, res: Response): Promise<any> => {
+export const getMyLoans = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).send({ msg: "Authorization header is missing" });
@@ -139,7 +145,7 @@ export const getMyLoans = async (req: Request, res: Response): Promise<any> => {
       updatedAt: getDateIST(loan.updatedAt) + " " + getTimeIST(loan.updatedAt),
     }));
     res.send(formattedLoans);
-  } catch (err: any) {
-    res.status(400).send({ error: err.message });
+  } catch (err) {
+    res.status(400).send({ error: (err as Error).message });
   }
 };

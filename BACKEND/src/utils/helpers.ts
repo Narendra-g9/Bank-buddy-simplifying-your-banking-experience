@@ -306,3 +306,122 @@ export const sendDebitCardRejectEmail = async (
     console.error("Error sending email:", error);
   }
 };
+
+// Send Admin Notification for Credit Transaction
+export const sendAdminCreditNotification = async (
+  userName: string,
+  amount: any,
+  accountNumber: string,
+  date: string
+) => {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (!adminEmail) return;
+
+  const transporter = nodemailer.createTransport(config.SMTP_URL, {});
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="background-color: white; padding: 20px; border-radius: 8px;">
+        <h2 style="color: #27ae60;">💳 Credit Transaction Notification</h2>
+        <p><strong>User:</strong> ${userName}</p>
+        <p><strong>Amount:</strong> ₹${amount}</p>
+        <p><strong>Account Number:</strong> ${accountNumber}</p>
+        <p><strong>Date & Time:</strong> ${date}</p>
+        <p style="color: #666; margin-top: 20px;">This is an automated notification from Bank Buddy System.</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.MAIL_FROM || "no-reply@yourapp.com",
+    to: adminEmail,
+    subject: `[ADMIN ALERT] Credit Transaction - ${userName}`,
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Admin notification sent to ${adminEmail}`);
+  } catch (error) {
+    console.error("Error sending admin notification:", error);
+  }
+};
+
+// Send Admin Notification for Debit Transaction
+export const sendAdminDebitNotification = async (
+  userName: string,
+  amount: any,
+  accountNumber: string,
+  date: string
+) => {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (!adminEmail) return;
+
+  const transporter = nodemailer.createTransport(config.SMTP_URL, {});
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="background-color: white; padding: 20px; border-radius: 8px;">
+        <h2 style="color: #e74c3c;">💸 Debit Transaction Notification</h2>
+        <p><strong>User:</strong> ${userName}</p>
+        <p><strong>Amount:</strong> ₹${amount}</p>
+        <p><strong>Account Number:</strong> ${accountNumber}</p>
+        <p><strong>Date & Time:</strong> ${date}</p>
+        <p style="color: #666; margin-top: 20px;">This is an automated notification from Bank Buddy System.</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.MAIL_FROM || "no-reply@yourapp.com",
+    to: adminEmail,
+    subject: `[ADMIN ALERT] Debit Transaction - ${userName}`,
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Admin notification sent to ${adminEmail}`);
+  } catch (error) {
+    console.error("Error sending admin notification:", error);
+  }
+};
+
+// Send Admin Notification for Transfer Transaction
+export const sendAdminTransferNotification = async (
+  userName: string,
+  amount: any,
+  fromAccount: string,
+  toAccount: string,
+  date: string
+) => {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (!adminEmail) return;
+
+  const transporter = nodemailer.createTransport(config.SMTP_URL, {});
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+      <div style="background-color: white; padding: 20px; border-radius: 8px;">
+        <h2 style="color: #3498db;">🔄 Transfer Transaction Notification</h2>
+        <p><strong>User:</strong> ${userName}</p>
+        <p><strong>Amount:</strong> ₹${amount}</p>
+        <p><strong>From Account:</strong> ${fromAccount}</p>
+        <p><strong>To Account:</strong> ${toAccount}</p>
+        <p><strong>Date & Time:</strong> ${date}</p>
+        <p style="color: #666; margin-top: 20px;">This is an automated notification from Bank Buddy System.</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.MAIL_FROM || "no-reply@yourapp.com",
+    to: adminEmail,
+    subject: `[ADMIN ALERT] Transfer Transaction - ${userName}`,
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Admin notification sent to ${adminEmail}`);
+  } catch (error) {
+    console.error("Error sending admin notification:", error);
+  }
+};

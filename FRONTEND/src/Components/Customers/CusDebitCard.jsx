@@ -4,13 +4,9 @@ import { toast } from "react-toastify";
 import "./CusDebitCard.css";
 
 import { jsPDF } from "jspdf";
-interface cardTypes {
-  cardHolder: string;
-  cardNumber: Array<string>;
-}
 const CusDebitCard = () => {
-  const [cardsExist, setCardExist] = useState<boolean>(false);
-  const [data, setData] = useState<cardTypes>();
+  const [cardsExist, setCardExist] = useState(false);
+  const [data, setData] = useState();
   const downloadPDF = () => {
     const doc = new jsPDF();
     const content = document.getElementById("table");
@@ -43,7 +39,7 @@ const CusDebitCard = () => {
     try {
       await api.post("apply/debitcard");
       toast.success("Debit Card Applied SuccessFully");
-    } catch (error: any) {
+    } catch (error) {
       console.log(error);
       toast.error(error.response.data.msg);
     }

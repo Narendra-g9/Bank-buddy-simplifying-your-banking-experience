@@ -1,20 +1,9 @@
 import { useEffect, useState } from "react";
 import api from "../../api/Api";
 import { toast } from "react-toastify";
-interface UserAccount {
-  _id: string;
-  userid: string;
-  status: string;
-  cardHolder: string;
-  __v: number;
-  email: string;
-  accNumber: string;
-  accBalance: number;
-  date: string;
-  time: string;
-}
+
 const DebitCard = () => {
-  const [data, setData] = useState<UserAccount[]>();
+  const [data, setData] = useState();
   const DebitCardData = async () => {
     try {
       let res = await api.get("getallDebitCards");
@@ -25,7 +14,7 @@ const DebitCard = () => {
     }
   };
 
-  const StatusChange = async (id: string, status: string) => {
+  const StatusChange = async (id, status) => {
     try {
       await api.patch(`updatedebit`, { status: status, debitid: id });
       toast.success(`Debit Card Successfully ${status}`);
@@ -61,7 +50,7 @@ const DebitCard = () => {
           <tbody>
             {data &&
               data?.length > 0 &&
-              data.map((item: UserAccount, index: number) => (
+              data.map((item, index) => (
                 <tr key={index}>
                   <td className="py-2 px-4 border border-gray-300">
                     {item.date} {item.time}

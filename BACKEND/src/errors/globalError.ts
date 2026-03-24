@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 
 export const ErrorHandler = (
-  err: any,
-  req: Request,
-  res: Response,
-  next: NextFunction
+  err,
+  req,
+  res,
+  next
 ) => {
   if (err) {
     console.log(err);

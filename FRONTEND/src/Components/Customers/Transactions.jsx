@@ -1,60 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import api from "../../api/Api";
 
-// Validation schema using Yup
+const Transactions = () => {
+  const [activeForm, setActiveForm] = useState("credit");
 
-// Define the shape of the form data
-export interface FormData {
-  accountNumber: string; // We will handle this programmatically
-  amount: number;
-  destinationAccount?: string;
-  accountBalance: string;
-  name: string;
-  accountName: string;
-}
-
-export interface AccountUser {
-  _id: string;
-  firstname: string;
-  lastname: string;
-  otherName: string;
-  gender: string;
-  address: string;
-  stateofOrigin: string;
-  email: string;
-  phoneNumber: string;
-  alternativePhoneNumber: string;
-}
-
-export interface BankAccount {
-  _id: string;
-  accNumber: string;
-  accUser: AccountUser;
-  accHolder: string;
-  accBalance: number;
-  qrCode: string;
-}
-
-export interface Transaction {
-  _id: string;
-  accountNumber: string;
-  accUser: string;
-  amount: number;
-  date: string;
-  __v: number;
-  transactionDate: string;
-  destinationAccount?: string;
-  transactionTime: string;
-}
-
-const Transactions: React.FC = () => {
-  const [activeForm, setActiveForm] = useState<"credit" | "debit" | "transfer">(
-    "credit"
-  );
-
-  const [TransactionsData, setTransactionsData] = useState<Transaction[]>();
+  const [TransactionsData, setTransactionsData] = useState();
 
   const {
     register,
@@ -62,9 +14,9 @@ const Transactions: React.FC = () => {
     formState: { errors },
     getValues,
     setValue,
-  } = useForm<FormData>();
+  } = useForm();
 
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
+  const onSubmit = async (data) => {
     try {
       if (activeForm == "credit") {
         await api.post("creditamount", { amount: data.amount });
@@ -106,7 +58,7 @@ const Transactions: React.FC = () => {
     try {
       const res = await api.get(`getprofileaccount`);
 
-      let response: BankAccount = res.data.userDetails;
+      let response = res.data.userDetails;
       console.log(response);
 
       setValue("accountNumber", response.accNumber);
@@ -387,7 +339,7 @@ const Transactions: React.FC = () => {
           </thead>
           <tbody>
             {TransactionsData &&
-              TransactionsData.map((item: Transaction, index: number) => (
+              TransactionsData.map((item, index) => (
                 <tr key={index + 1}>
                   <td className="py-2 px-4 border border-gray-300">
                     {item.transactionDate} {item.transactionTime}

@@ -1,6 +1,6 @@
 import React from "react";
 
-const ServicesPage: React.FC = () => {
+const ServicesPage = () => {
   return (
     <div className="   object-cover lg:min-h-[85vh] bg-no-repeat p-24">
       <div className="grid md:grid-cols-3 max-w-screen-lg mx-auto gap-10  px-5 bg-white p-5 shadow-xl">

@@ -1,29 +1,16 @@
 import { useEffect, useState } from "react";
-import Form, { FormInputsTypes } from "../from/Form";
+import Form from "../from/Form";
 import api from "../../api/Api";
 import { toast } from "react-toastify";
 
-interface LoanApplication {
-  _id: string;
-  user: string;
-  amount: number;
-  interestRate: number;
-  term: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  loanType: string;
-  __v: number;
-}
+const Table = ({ endpoint }) => {
+  const [Modal, setModal] = useState(false);
 
-const Table = ({ endpoint }: { endpoint: string }) => {
-  const [Modal, setModal] = useState<boolean>(false);
-
-  const [data, setData] = useState<LoanApplication[]>();
+  const [data, setData] = useState();
 
   const role = localStorage.getItem("role");
 
-  const Loans: FormInputsTypes = {
+  const Loans = {
     inputs: [
       {
         inputName: "Loan Amount",
@@ -71,7 +58,7 @@ const Table = ({ endpoint }: { endpoint: string }) => {
     }
   };
 
-  const loanStatus = async (id: string, status: string) => {
+  const loanStatus = async (id, status) => {
     try {
       await api.patch(`loans/status/${id}`, { status: status });
       toast.success(`Loan ${status}`);
@@ -115,7 +102,7 @@ const Table = ({ endpoint }: { endpoint: string }) => {
           </thead>
           <tbody>
             {data &&
-              data.map((item: LoanApplication, index: number) => (
+              data.map((item, index) => (
                 <tr key={index}>
                   <td className="py-2 px-4 border border-gray-300">
                     {item.createdAt}

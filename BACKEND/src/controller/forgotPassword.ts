@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import otpGenerator from "otp-generator";
 import { OTP, User } from "../schema/usersSchema";
 import { sendOTPEmail } from "../utils/helpers";
-export const sendOTP = async (req: Request, res: Response): Promise<any> => {
+export const sendOTP = async (req, res)=> {
   try {
     const { email } = req.body;
     const findAccount = await User.findOne({ email: email });
@@ -29,7 +29,7 @@ export const sendOTP = async (req: Request, res: Response): Promise<any> => {
     res.status(200).json({
       message: "OTP sent successfully",
     });
-  } catch (err: any) {
+  } catch (err) {
     return res.status(400).send({ error: err });
   }
 };
