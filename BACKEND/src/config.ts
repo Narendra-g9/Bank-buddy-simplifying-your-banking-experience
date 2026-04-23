@@ -12,6 +12,6 @@ export default {
     process.env.USER_ACCESS_TOKEN_SECRET || "DOC$@!:-0><?:TORT67K@!E><N",
   SMTP_URL:
     process.env.SMTP_URL ||
-    "smtps://narendrayadala5@gmail.com:Narendra@123@smtp.gmail.com/?pool=true",
+    "smtps://narendrayadala5%40gmail.com:Narendra%40123@smtp.gmail.com/?pool=true",
   ACCESS_TOKEN_EXPIRY: "2d",
 };

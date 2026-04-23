@@ -3,7 +3,7 @@ import { verifyAdminToken, verifyUserToken } from "../middlewares/verifyTokens";
 import { Request, Response } from "express";
 import { Account, Loan, User } from "../schema/usersSchema";
 import { getDateIST, getTimeIST } from "../utils/getIstDateTime";
-import { sendLoanUpdateStatusEmail } from "../utils/helpers";
+import { sendLoanUpdateStatusEmail, sendAdminLoanApplicationNotification } from "../utils/helpers";
 
 // Create a new loan application
 export const createLoan = async (req, res) => {
@@ -22,6 +22,8 @@ export const createLoan = async (req, res) => {
     }
 
     const userid = decoded.id;
+    const userDetails = await User.findOne({ _id: userid });
+    
     const newLoan = new Loan({
       user: userid,
       amount,
@@ -30,6 +32,15 @@ export const createLoan = async (req, res) => {
       loanType,
     });
     await newLoan.save();
+    
+    // Send admin notification
+    if (userDetails) {
+      let userName = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
+      let userEmail = userDetails?.email || "";
+      let date = getDateIST(newLoan.createdAt) + " " + getTimeIST(newLoan.createdAt);
+      sendAdminLoanApplicationNotification(userName, userEmail, amount, loanType, date);
+    }
+    
     res
       .status(201)
       .send({ msg: "Loan application created successfully.", loan: newLoan });

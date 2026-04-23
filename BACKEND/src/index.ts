@@ -24,6 +24,8 @@ app.use("/api", router);
 app.use("/public", express.static("public"));
 
 // Serve frontend build (if present) so visiting backend root shows the app
+// In dev (ts-node): __dirname = BACKEND/src, go up twice to reach project root
+// In prod (compiled): __dirname = BACKEND/dist, go up twice to reach project root
 const frontendDist = path.join(__dirname, "..", "..", "FRONTEND", "dist");
 app.use(express.static(frontendDist));
 app.get("/*", (req, res) => {
@@ -35,25 +37,32 @@ app.get("/*", (req, res) => {
 
 app.use(ErrorHandler);
 
-const PORT = config.PORT;
-mongoose
-  .connect(config.DB_URL)
-  .then(() => {
-    console.log("DataBase connected successfully");
-    const server = app.listen(PORT, () => {
-      console.log(`Server Listening at the Port ${PORT}`);
-    });
+const startPortNumber = Number(config.PORT);
+let PORT: number = startPortNumber;
 
-    server.on("error", (err: any) => {
-      if (err && err.code === "EADDRINUSE") {
-        console.error(
-          `Port ${PORT} is already in use. Stop other processes or change PORT.`
-        );
-        process.exit(1);
-      } else {
-        console.error("Server error:", err);
-        process.exit(1);
-      }
-    });
-  })
-  .catch((err) => console.log(`Error: ${err}`));
+const startServer = () => {
+  mongoose
+    .connect(config.DB_URL)
+    .then(() => {
+      console.log("DataBase connected successfully");
+      const server = app.listen(PORT, () => {
+        console.log(`Server Listening at the Port ${PORT}`);
+      });
+
+      server.on("error", (err: any) => {
+        if (err && err.code === "EADDRINUSE") {
+          console.log(
+            `Port ${PORT} is already in use. Trying port ${PORT + 1}...`
+          );
+          PORT++;
+          startServer();
+        } else {
+          console.error("Server error:", err);
+          process.exit(1);
+        }
+      });
+    })
+    .catch((err) => console.log(`Error: ${err}`));
+};
+
+startServer();

@@ -46,14 +46,20 @@ const UserForm = () => {
 
   const onSubmit = async (data) => {
     try {
-      await api.post("user/register", data);
-
-      toast.success("User registered successfully");
-      navigate("/login");
+      const response = await api.post("user/register", data);
+      
+      toast.success("✅ User registered successfully!");
+      console.log("Registration response:", response.data);
+      
+      // Show success message for a moment before navigating
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
-      console.log(error);
+      console.error("Registration error:", error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.msg || "Registration failed";
+      toast.error("❌ " + (typeof errorMessage === 'string' ? errorMessage : "An error occurred during registration"));
     }
-    // Perform your form submission logic here
   };
 
   return (

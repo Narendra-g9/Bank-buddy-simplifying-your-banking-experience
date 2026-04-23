@@ -52,31 +52,31 @@ export const sendLoanUpdateStatusEmail = async (
 
 // Function to send email to User when his/her Registration Successfull
 export const sendRegistrationEmail = async (email: string, name: string) => {
-  console.log("dedededee  ", email, name);
-
-  // Read email template from file
-  let template = fs.readFileSync(
-    "./src/templates/Registration-Successful.html",
-    "utf8"
-  );
-  console.log("Inside the Registration Email");
-
-  template = template.replace("{{name}}", name);
-
-  const transporter = nodemailer.createTransport(config.SMTP_URL, {});
-
-  const mailOptions = {
-    from: process.env.MAIL_FROM || "yenumulasrirambrahmareddy@gmail.com",
-    to: email,
-    subject: `Your Registration Successful`,
-    html: template,
-  };
+  console.log("🔔 Sending Registration Email to:", email);
 
   try {
+    // Read email template from file
+    let template = fs.readFileSync(
+      "./src/templates/Registration-Successful.html",
+      "utf8"
+    );
+
+    template = template.replace("{{name}}", name);
+
+    const transporter = nodemailer.createTransport(config.SMTP_URL, {});
+
+    const mailOptions = {
+      from: process.env.MAIL_FROM || "narendrayadala444@gmail.com",
+      to: email,
+      subject: `Your Registration Successful ✅`,
+      html: template,
+    };
+
     await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${email}`);
+    console.log(`✅ Registration Email sent successfully to ${email}`);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("❌ Error sending registration email:", error);
+    throw error;
   }
 };
 
@@ -423,5 +423,93 @@ export const sendAdminTransferNotification = async (
     console.log(`Admin notification sent to ${adminEmail}`);
   } catch (error) {
     console.error("Error sending admin notification:", error);
+  }
+};
+
+// Send Admin Notification for Loan Application
+export const sendAdminLoanApplicationNotification = async (
+  userName: string,
+  userEmail: string,
+  amount: number,
+  loanType: string,
+  date: string
+) => {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  console.log("📧 Sending Loan Notification to Admin:", adminEmail);
+  
+  if (!adminEmail) {
+    console.warn("⚠️  ADMIN_NOTIFICATION_EMAIL not configured");
+    return;
+  }
+
+  try {
+    const transporter = nodemailer.createTransport(config.SMTP_URL, {});
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #f39c12;">📋 New Loan Application</h2>
+          <p><strong>User Name:</strong> ${userName}</p>
+          <p><strong>User Email:</strong> ${userEmail}</p>
+          <p><strong>Loan Amount:</strong> ₹${amount}</p>
+          <p><strong>Loan Type:</strong> ${loanType}</p>
+          <p><strong>Applied Date & Time:</strong> ${date}</p>
+          <p style="color: #666; margin-top: 20px;">This is an automated notification from Bank Buddy System. Please review and approve/reject this application.</p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: process.env.MAIL_FROM || "narendrayadala444@gmail.com",
+      to: adminEmail,
+      subject: `[NEW APPLICATION] Loan Application from ${userName}`,
+      html: htmlContent,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Admin loan notification sent to ${adminEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending admin loan notification:", error);
+  }
+};
+
+// Send Admin Notification for Debit Card Application
+export const sendAdminDebitCardApplicationNotification = async (
+  userName: string,
+  userEmail: string,
+  date: string
+) => {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  console.log("📧 Sending Debit Card Notification to Admin:", adminEmail);
+  
+  if (!adminEmail) {
+    console.warn("⚠️  ADMIN_NOTIFICATION_EMAIL not configured");
+    return;
+  }
+
+  try {
+    const transporter = nodemailer.createTransport(config.SMTP_URL, {});
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #9b59b6;">🏧 New Debit Card Application</h2>
+          <p><strong>User Name:</strong> ${userName}</p>
+          <p><strong>User Email:</strong> ${userEmail}</p>
+          <p><strong>Applied Date & Time:</strong> ${date}</p>
+          <p style="color: #666; margin-top: 20px;">This is an automated notification from Bank Buddy System. Please review and approve/reject this application.</p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: process.env.MAIL_FROM || "narendrayadala444@gmail.com",
+      to: adminEmail,
+      subject: `[NEW APPLICATION] Debit Card Application from ${userName}`,
+      html: htmlContent,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Admin debit card notification sent to ${adminEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending admin debit card notification:", error);
   }
 };

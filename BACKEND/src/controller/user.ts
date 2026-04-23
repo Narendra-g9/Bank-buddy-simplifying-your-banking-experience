@@ -18,6 +18,7 @@ import {
   sendAdminCreditNotification,
   sendAdminDebitNotification,
   sendAdminTransferNotification,
+  sendAdminDebitCardApplicationNotification,
 } from "../utils/helpers";
 import { userTokens } from "../utils/tokenGeneration";
 import { verifyUserToken } from "../middlewares/verifyTokens";
@@ -570,12 +571,16 @@ export const applyDebit = async (req, res) => {
       });
     }
 
-    await DebitCard.create({
+    const debitCardApplication = await DebitCard.create({
       userid: userid,
       cardHolder: fullname,
     });
-    if (true) {
+    
+    if (debitCardApplication) {
       sendAppliedDebitCardEmail(fullname, userEmail);
+      // Send admin notification
+      let date = getDateIST(debitCardApplication.createdAt) + " " + getTimeIST(debitCardApplication.createdAt);
+      sendAdminDebitCardApplicationNotification(fullname, userEmail, date);
     }
 
     res.send({ msg: "Successfully Debit Card Applied.Wait For Approval " });
