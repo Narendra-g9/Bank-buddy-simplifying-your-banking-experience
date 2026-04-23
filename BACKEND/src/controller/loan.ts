@@ -38,7 +38,7 @@ export const createLoan = async (req, res) => {
       let userName = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
       let userEmail = userDetails?.email || "";
       let date = getDateIST(newLoan.createdAt) + " " + getTimeIST(newLoan.createdAt);
-      sendAdminLoanApplicationNotification(userName, userEmail, amount, loanType, date);
+      sendAdminLoanApplicationNotification(userName, userEmail, amount, loanType, date).catch((err) => console.error("Admin loan notification failed (non-blocking):", err.message));
     }
     
     res
@@ -118,13 +118,13 @@ export const updateLoanStatus = async (
       await accountDetails.save();
       let name = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
       if (accountDetails) {
-        sendLoanUpdateStatusEmail(userDetails?.email || "", status, name, loan);
+        sendLoanUpdateStatusEmail(userDetails?.email || "", status, name, loan).catch((err) => console.error("Loan status email failed (non-blocking):", err.message));
       }
     }
     if (status === "rejected") {
       let name = (userDetails?.firstname || "") + " " + (userDetails?.lastname || "");
       if (status) {
-        sendLoanUpdateStatusEmail(userDetails?.email || "", status, name, loan);
+        sendLoanUpdateStatusEmail(userDetails?.email || "", status, name, loan).catch((err) => console.error("Loan rejection email failed (non-blocking):", err.message));
       }
     }
     res.send({ msg: "Loan status updated successfully.", loan });

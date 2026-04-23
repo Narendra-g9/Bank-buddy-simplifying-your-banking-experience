@@ -24,7 +24,7 @@ export const sendOTP = async (req, res)=> {
     const otpPayload = { email, otp };
     const otpCreate = await OTP.create(otpPayload);
     if (otpCreate) {
-      sendOTPEmail(email, otp);
+      sendOTPEmail(email, otp).catch((err) => console.error("OTP email failed (non-blocking):", err.message));
     }
     res.status(200).json({
       message: "OTP sent successfully",

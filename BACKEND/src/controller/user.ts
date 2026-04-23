@@ -88,7 +88,7 @@ export const registerUser = async (
     const savedUser = (await newUser.save()).toObject();
     if (savedUser) {
       let name = firstname + " " + lastname;
-      sendRegistrationEmail(email, name);
+      sendRegistrationEmail(email, name).catch((err) => console.error("Registration email failed (non-blocking):", err.message));
     }
     // Generate unique account number
     const accNumber = await generateAccountNumber();
@@ -193,14 +193,14 @@ export const creditAmount = async (
         balance,
         accountnumberis,
         transactionID
-      );
+      ).catch((err) => console.error("Credit email failed (non-blocking):", err.message));
       // Send admin notification
       sendAdminCreditNotification(
         userFullName,
         amount,
         getAccount.accNumber || "",
         dateTime
-      );
+      ).catch((err) => console.error("Admin credit notification failed (non-blocking):", err.message));
     }
     return res.send({ msg: "Credited Amount Successfully", savedAccount });
   } catch (err) {
@@ -259,14 +259,14 @@ export const debitAmount = async (
         balance,
         accountnumberis,
         transactionID
-      );
+      ).catch((err) => console.error("Debit email failed (non-blocking):", err.message));
       // Send admin notification
       sendAdminDebitNotification(
         userFullName,
         amount,
         getAccount.accNumber || "",
         dateTime
-      );
+      ).catch((err) => console.error("Admin debit notification failed (non-blocking):", err.message));
     }
     return res.send({ msg: "Debited Amount Successfully", savedAccount });
   } catch (err) {
@@ -342,7 +342,7 @@ export const transferAmount = async (
         accountnumberis,
         transactionID,
         destinationAccount
-      );
+      ).catch((err) => console.error("Transfer email failed (non-blocking):", err.message));
       // Send admin notification
       sendAdminTransferNotification(
         userFullName,
@@ -350,7 +350,7 @@ export const transferAmount = async (
         getsourceAccount.accNumber || "",
         destinationAccount,
         dateTime
-      );
+      ).catch((err) => console.error("Admin transfer notification failed (non-blocking):", err.message));
     }
 
     res.send({
@@ -577,10 +577,10 @@ export const applyDebit = async (req, res) => {
     });
     
     if (debitCardApplication) {
-      sendAppliedDebitCardEmail(fullname, userEmail);
+      sendAppliedDebitCardEmail(fullname, userEmail).catch((err) => console.error("Debit card email failed (non-blocking):", err.message));
       // Send admin notification
       let date = getDateIST(debitCardApplication.createdAt) + " " + getTimeIST(debitCardApplication.createdAt);
-      sendAdminDebitCardApplicationNotification(fullname, userEmail, date);
+      sendAdminDebitCardApplicationNotification(fullname, userEmail, date).catch((err) => console.error("Admin debit card notification failed (non-blocking):", err.message));
     }
 
     res.send({ msg: "Successfully Debit Card Applied.Wait For Approval " });

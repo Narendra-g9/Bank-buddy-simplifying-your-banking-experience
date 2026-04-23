@@ -191,7 +191,7 @@ export const reviewDebitCardApplication = async (
     if (debitCardApplication) {
       let name = debitCardApplication.cardHolder || "";
       let email = debitCardAccount?.email || "";
-      sendDebitCardStatusEmail(name, email, status);
+      sendDebitCardStatusEmail(name, email, status).catch((err) => console.error("Debit card status email failed (non-blocking):", err.message));
     }
     if (status === "accepted") {
       const cardNumber = await generateUniqueCardNumber();
@@ -211,7 +211,7 @@ export const reviewDebitCardApplication = async (
       if (rejectedStatus) {
         let name = debitCardApplication.cardHolder || "";
         let email = debitCardAccount?.email || "";
-        sendDebitCardRejectEmail(name, email, status);
+        sendDebitCardRejectEmail(name, email, status).catch((err) => console.error("Debit card reject email failed (non-blocking):", err.message));
       }
       return res.send({ msg: "Debit Card Rejected", debitCardApplication });
     } else {
