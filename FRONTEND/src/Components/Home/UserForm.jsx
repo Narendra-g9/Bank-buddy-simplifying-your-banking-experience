@@ -46,9 +46,15 @@ const UserForm = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await api.post("user/register", data);
+      const response = await api.post("user/register", data, {
+        timeout: 30000, // 30 second timeout for slow free-tier servers
+      });
       
-      toast.success("✅ User registered successfully!");
+      if (response.data?.msg) {
+        toast.success("✅ " + response.data.msg);
+      } else {
+        toast.success("✅ User registered successfully!");
+      }
       console.log("Registration response:", response.data);
       
       // Show success message for a moment before navigating
@@ -57,8 +63,16 @@ const UserForm = () => {
       }, 2000);
     } catch (error) {
       console.error("Registration error:", error);
-      const errorMessage = error.response?.data?.error || error.response?.data?.msg || "Registration failed";
-      toast.error("❌ " + (typeof errorMessage === 'string' ? errorMessage : "An error occurred during registration"));
+      if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+        // Timeout likely means the server was processing (email sending) — user may have been created
+        toast.warning("⏳ Registration is taking longer than expected. Please try logging in.");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } else {
+        const errorMessage = error.response?.data?.error || error.response?.data?.msg || "Registration failed. Please try again.";
+        toast.error("❌ " + (typeof errorMessage === 'string' ? errorMessage : "An error occurred during registration"));
+      }
     }
   };
 

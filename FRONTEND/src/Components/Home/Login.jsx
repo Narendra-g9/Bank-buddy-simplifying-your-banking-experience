@@ -23,6 +23,8 @@ const Login = () => {
       toast.success("Login Successful");
     } catch (error) {
       console.log(error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.msg || "Login failed. Please check your email and password.";
+      toast.error("❌ " + errorMessage);
     }
   });
 
